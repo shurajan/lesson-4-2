@@ -1,6 +1,6 @@
 package com.geekbrains.lesson4_2;
 
-class ClientDataContainer {
+public class ClientDataContainer {
     private StringBuilder command;
     private String currentFolder;
 

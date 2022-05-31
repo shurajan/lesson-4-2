@@ -1,5 +1,7 @@
 package com.geekbrains.lesson4_2;
 
+import com.geekbrains.lesson4_2.processors.*;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -8,15 +10,10 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public class NioServer {
 
@@ -80,6 +77,7 @@ public class NioServer {
                     } else {
                         byte[] commandOutput = processCommamd(cd);
                         channel.write(ByteBuffer.wrap(commandOutput));
+                        channel.write(ByteBuffer.wrap("\n\r->".getBytes(StandardCharsets.UTF_8)));
                         cd.setCommand(new StringBuilder());
                         //cmdLineBuffers.put(channel, new StringBuilder());
                     }
@@ -94,46 +92,22 @@ public class NioServer {
     }
 
     private byte[] processCommamd(ClientDataContainer cd) throws IOException {
-        StringBuilder outputMessage = new StringBuilder();
-
         String command = cd.getCommand()
                 .toString().replaceAll("(\\r|\\n)", "")
                 .trim();
         ;
         String[] commandInfo = command.split(" ");
 
-        String typeOfDay;
-        switch (commandInfo[0]) {
-            case "ls":
-                Path dir = Paths.get(cd.getCurrentFolder());
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-                    for (Path file : stream) {
-                        outputMessage.append(file.getFileName());
-                        outputMessage.append("\r\n");
-                    }
-                }
-                break;
-            case "cat":
+        //пропускаем пустые строчки
+       if (commandInfo[0].equals("")) return new byte[0];
 
-                //byte[] content = Files.re(Paths.get(cd.getCurrentFolder()+ "\\" +commandInfo[1]));
-                //outputMessage.append(content.toString());
-
-                break;
-            case "cd":
-                outputMessage.append("cd command");
-                break;
-            case "\n":
-                break;
-            default: {
-                outputMessage.append("Unknown command - \"");
-                outputMessage.append(command);
-                outputMessage.append("\"");
-                break;
-            }
-        }
-
-        outputMessage.append("\n\r->");
-        return outputMessage.toString().getBytes(StandardCharsets.UTF_8);
+        CommandProcessor processor = switch (commandInfo[0]) {
+            case "ls" -> new LsCommandProcessor(cd.getCurrentFolder());
+            case "cat" -> new CatCommandProcessor(cd.getCurrentFolder(),commandInfo);
+            case "cd" -> new CdCommandProcessor(cd.getCurrentFolder(),commandInfo);
+            default -> new DefaultCommandProcessor();
+        };
+        return processor.execute();
     }
 
     private void handleAccept() throws IOException {
