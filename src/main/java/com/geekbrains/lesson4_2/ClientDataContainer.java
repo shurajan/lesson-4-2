@@ -9,12 +9,18 @@ public class ClientDataContainer {
         this.currentFolder = System.getProperty("user.home");
     }
 
-    public StringBuilder getCommand() {
-        return command;
+    public String[] getCommand() {
+        String command = this.command
+                .toString()
+                .replaceAll("(\\r|\\n)", "")
+                .replaceAll("\\s+"," ")
+                .trim();
+
+       return command.split(" ");
     }
 
-    public void setCommand(StringBuilder command) {
-        this.command = command;
+    public void clearCommand() {
+        this.command = new StringBuilder();
     }
 
     public String getCurrentFolder() {
@@ -23,5 +29,9 @@ public class ClientDataContainer {
 
     public void setCurrentFolder(String currentFolder) {
         this.currentFolder = currentFolder;
+    }
+
+    public void append(char symbol) {
+        this.command.append(symbol);
     }
 }

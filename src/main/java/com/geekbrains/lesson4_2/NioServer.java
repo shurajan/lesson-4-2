@@ -67,22 +67,22 @@ public class NioServer {
             while (buf.hasRemaining()) {
                 char symbol = (char) buf.get();
                 if (symbol == '\n') {
-                    String command = cd.getCommand().toString()
+                    String command = cd.getCommand()[0]
                             .replaceAll("(\\r|\\n)", "")
                             .trim();
-
                     if (command.equals("q")) {
                         channel.close();
                         return;
                     } else {
-                        byte[] commandOutput = processCommamd(cd);
+                        byte[] commandOutput = new CommandProcessorFactory()
+                                .createProcessor(cd)
+                                .execute();
                         channel.write(ByteBuffer.wrap(commandOutput));
-                        channel.write(ByteBuffer.wrap("\n\r->".getBytes(StandardCharsets.UTF_8)));
-                        cd.setCommand(new StringBuilder());
-                        //cmdLineBuffers.put(channel, new StringBuilder());
+                        channel.write(ByteBuffer.wrap("\r->".getBytes(StandardCharsets.UTF_8)));
+                        cd.clearCommand();
                     }
                 } else {
-                    cd.getCommand().append(symbol);
+                    cd.append(symbol);
                 }
             }
             buf.clear();
@@ -91,24 +91,6 @@ public class NioServer {
 
     }
 
-    private byte[] processCommamd(ClientDataContainer cd) throws IOException {
-        String command = cd.getCommand()
-                .toString().replaceAll("(\\r|\\n)", "")
-                .trim();
-        ;
-        String[] commandInfo = command.split(" ");
-
-        //пропускаем пустые строчки
-       if (commandInfo[0].equals("")) return new byte[0];
-
-        CommandProcessor processor = switch (commandInfo[0]) {
-            case "ls" -> new LsCommandProcessor(cd.getCurrentFolder());
-            case "cat" -> new CatCommandProcessor(cd.getCurrentFolder(),commandInfo);
-            case "cd" -> new CdCommandProcessor(cd.getCurrentFolder(),commandInfo);
-            default -> new DefaultCommandProcessor();
-        };
-        return processor.execute();
-    }
 
     private void handleAccept() throws IOException {
         SocketChannel channel = server.accept();

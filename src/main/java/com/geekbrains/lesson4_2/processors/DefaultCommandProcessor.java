@@ -3,9 +3,18 @@ package com.geekbrains.lesson4_2.processors;
 
 import java.nio.charset.StandardCharsets;
 
-public final class DefaultCommandProcessor implements CommandProcessor {
+final class DefaultCommandProcessor implements CommandProcessor {
+    private final String message;
+
+    DefaultCommandProcessor(){
+        this.message = "Unrecognized command\n\r->";
+    }
+
+    public DefaultCommandProcessor(String message){
+        this.message = message;
+    }
     @Override
     public byte[] execute() {
-        return "Unrecognized command\n\r->".getBytes(StandardCharsets.UTF_8);
+        return message.getBytes(StandardCharsets.UTF_8);
     }
 }

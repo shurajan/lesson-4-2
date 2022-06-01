@@ -1,5 +1,7 @@
 package com.geekbrains.lesson4_2.processors;
 
+import com.geekbrains.lesson4_2.ClientDataContainer;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -7,20 +9,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public final class LsCommandProcessor implements CommandProcessor{
-    private final String path;
+final class LsCommandProcessor implements CommandProcessor{
+    private final Path path;
 
-    public LsCommandProcessor(String path) {
-        this.path = path;
+    LsCommandProcessor(ClientDataContainer clientDataContainer) {
+        this.path = Paths.get(clientDataContainer.getCurrentFolder());
     }
 
     @Override
     public byte[] execute() {
-        Path dir = Paths.get(path);
+
+        if (!Files.exists(path)) return "no such folder\n".getBytes(StandardCharsets.UTF_8);
+        if (!Files.isDirectory(path)) return "can not ls files\n".getBytes(StandardCharsets.UTF_8);
 
         StringBuilder outputMessage = new StringBuilder();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+        outputMessage.append(path.toString());
+        outputMessage.append("\r\n");
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
             for (Path file : stream) {
+                outputMessage.append("    ");
                 outputMessage.append(file.getFileName());
                 outputMessage.append("\r\n");
             }
